@@ -1,0 +1,3 @@
+﻿A proof of concept for generating ac client function signatures from ida lst exports of the old client/pdb.
+
+The idea is to use these signatures to find all the offsets in the new client...
