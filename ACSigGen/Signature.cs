@@ -20,7 +20,7 @@ namespace ACSigGen {
             clientBin.BaseStream.Seek(addr, SeekOrigin.Begin);
             
             // TODO: need to find shortest *unique* signature..
-            var buffer = clientBin.ReadBytes(16);
+            var buffer = clientBin.ReadBytes(22);
             var sigStr = new StringBuilder();
 
             var callCount = 0;

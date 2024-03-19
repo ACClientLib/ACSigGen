@@ -78,8 +78,16 @@ namespace ACSigGen {
             var subs = new List<Signature>();
             var i = 0;
             foreach (var line in lst) {
-                if (line.Length > 35 && line.StartsWith(".text:") && line.Contains("S U B R O U T I N E")) {
-                    var subLine = lst[i + 3];
+                if (line.StartsWith(".text:") && line.Contains("S U B R O U T I N E")) {
+                    var x = 1;
+                    while (lst[i + x].Length < 15) {
+                        //Console.WriteLine($"LINE < 15: {lst[i + x]}");
+                        x++;
+                    }
+
+                    var subLine = lst[i + x];
+
+                    if (subLine.Contains("ECM_Physics")) Console.WriteLine(subLine);
 
                     // skip unnamed subs
                     if (subLine.Length > 19 && subLine.Substring(15, 4) == "sub_") continue;
@@ -87,7 +95,8 @@ namespace ACSigGen {
                     if (uint.TryParse(subLine.Substring(6, 8), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var addr)) {
                         var name = $"Sub@{addr:X8}: {subLine.Split(';').Last().Trim()}";
 
-                        if (subLine.Contains(" MasterDBMap::")) {
+                        // limited testing...
+                        if (subLine.Contains(" ACCObjectMaint:")) {
                             var signature = Signature.FindFromAddress(name, addr - (uint)oldClientTextSection.ImageBaseAddress, oldClientBin);
                             Console.WriteLine(name);
                             Console.WriteLine($"\tSignature: {signature?.Pattern ?? "Unable to find signature..."}");
