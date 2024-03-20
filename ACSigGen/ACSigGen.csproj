@@ -9,7 +9,9 @@
 
   <ItemGroup>
     <PackageReference Include="PeNet" Version="4.0.4" />
+    <PackageReference Include="Reloaded.Memory" Version="9.4.1" />
     <PackageReference Include="Reloaded.Memory.Sigscan" Version="3.1.8" />
+    <PackageReference Include="SharpDisasm" Version="1.1.11" />
   </ItemGroup>
 
 </Project>

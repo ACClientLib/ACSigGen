@@ -64,7 +64,7 @@ namespace ACSigGen {
                 sw.Stop();
                 Console.WriteLine($"Took {((double)sw.ElapsedTicks / Stopwatch.Frequency) * 1000.0:N2} ms to find {found}/{signatures.Count} signatures");
             }
-            catch (Exception ex) { Console.WriteLine(ex.ToString()); }
+            catch (Exception ex) { Console.WriteLine(ex.Message); Console.WriteLine(ex.ToString()); }
         }
 
         private static List<Signature> GenerateSignatures(string[] lst, PeFile oldClientPeHeader, BinaryReader oldClientBin) {
@@ -74,6 +74,14 @@ namespace ACSigGen {
                 throw new Exception($"No .text section in old client PE headers");
             }
 
+            oldClientBin.BaseStream.Position = (long)0;
+            var oldClientBytes = oldClientBin.ReadBytes((int)oldClientBin.BaseStream.Length);
+
+            SharpDisasm.ArchitectureMode mode = SharpDisasm.ArchitectureMode.x86_32;
+            SharpDisasm.Disassembler.Translator.IncludeAddress = true;
+            SharpDisasm.Disassembler.Translator.IncludeBinary = true;
+            
+            var disasm = new SharpDisasm.Disassembler(oldClientBytes, mode, 0, true);
 
             var subs = new List<Signature>();
             var i = 0;
@@ -97,7 +105,7 @@ namespace ACSigGen {
 
                         // limited testing...
                         if (subLine.Contains(" ACCObjectMaint:")) {
-                            var signature = Signature.FindFromAddress(name, addr - (uint)oldClientTextSection.ImageBaseAddress, oldClientBin);
+                            var signature = Signature.FindFromAddress(disasm, name, addr - (uint)oldClientTextSection.ImageBaseAddress, oldClientBin);
                             Console.WriteLine(name);
                             Console.WriteLine($"\tSignature: {signature?.Pattern ?? "Unable to find signature..."}");
 
@@ -114,6 +122,13 @@ namespace ACSigGen {
             }
 
             return subs;
+        }
+
+        private static byte[] HexStringToByteArray(string hex) {
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                             .ToArray();
         }
 
         private static string[] LoadLst(string lstPath) {

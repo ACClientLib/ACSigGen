@@ -1,4 +1,5 @@
 ﻿using Reloaded.Memory.Sigscan;
+using SharpDisasm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,12 +8,14 @@ using System.Threading.Tasks;
 
 namespace ACSigGen {
     public class Signature {
+        private Disassembler disasm;
+
         public string Name { get; }
         public string Pattern { get; }
 
-        internal static Signature? FindFromAddress(string name, uint addr, BinaryReader clientBin) {
+        internal static Signature? FindFromAddress(SharpDisasm.Disassembler disasm, string name, uint addr, BinaryReader clientBin) {
             var pattern = FindUniqueSignaturePattern(addr, clientBin);
-            return !string.IsNullOrWhiteSpace(pattern) ? new Signature(name, pattern) : null;
+            return !string.IsNullOrWhiteSpace(pattern) ? new Signature(disasm, name, pattern) : null;
         }
 
         private static string? FindUniqueSignaturePattern(uint addr, BinaryReader clientBin) {
@@ -20,8 +23,15 @@ namespace ACSigGen {
             clientBin.BaseStream.Seek(addr, SeekOrigin.Begin);
             
             // TODO: need to find shortest *unique* signature..
-            var buffer = clientBin.ReadBytes(22);
+            var buffer = clientBin.ReadBytes(64);
             var sigStr = new StringBuilder();
+
+            var disasm = new SharpDisasm.Disassembler(buffer, ArchitectureMode.x86_32, 0, true);
+
+            var instructions = disasm.Disassemble();
+            foreach (var instruction in instructions) {
+                Console.WriteLine(instruction);
+            }
 
             var callCount = 0;
 
@@ -61,6 +71,12 @@ namespace ACSigGen {
         }
 
         public Signature(string name, string pattern) {
+            Name = name;
+            Pattern = pattern;
+        }
+
+        public Signature(Disassembler disasm, string name, string pattern) {
+            this.disasm = disasm;
             Name = name;
             Pattern = pattern;
         }
