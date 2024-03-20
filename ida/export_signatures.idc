@@ -22,12 +22,13 @@ static main()
 	Wait(); // We won't work until autoanalysis is complete
 
 	SetStatus(IDA_STATUS_WORK);
-  auto x = 0;
+  auto maxSigs = 200;
 	auto pAddress = get_next_func(0);
 
   auto madeSigs, noSigs;
 
-  while (x < 500 && pAddress != BADADDR) {
+  while (maxSigs > 0 && pAddress != BADADDR) {
+   if (pAddress >= 0x004171E0) { // just to set us into the middle of functions a bit...
     auto res = MakeSig(pAddress);
     if (res > 0) {
      madeSigs = madeSigs + 1;
@@ -35,7 +36,8 @@ static main()
     else {
      noSigs = noSigs + 1;
     }
-   x = x + 1;
+    maxSigs = maxSigs - 1;
+   }
    pAddress = get_next_func(pAddress);
   }
 
@@ -55,7 +57,7 @@ static MakeSig(startAddress)
 
 	auto name = get_name(pAddress, GN_DEMANGLED);
 	auto sig = "", found = 0;
-	auto pFunctionEnd = GetFunctionAttr(pAddress, FUNCATTR_END);
+	auto pFunctionEnd = GetFunctionAttr(pAddress, FUNCATTR_END) + 6;
 
 	Message("Signature for %s:\n", name);
 	while (pAddress != BADADDR) {
@@ -137,10 +139,10 @@ static MakeSigFromXRefs(pAddress)
 
   while (dAddress != BADADDR) {
     // this isnt right... but it works to limit search area? do we even want to...?
-    if (dAddress > 0x00791DC6 || dAddress < 0x00401000) {
-     dAddress = get_next_dref_to(pAddress, dAddress);
-     continue;
-    }
+    //if (dAddress > 0x00791DC6 || dAddress < 0x00401000) {
+    // dAddress = get_next_dref_to(pAddress, dAddress);
+    // continue;
+    //}
 
     sig = "";
     auto cAddress = dAddress;
